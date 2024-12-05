@@ -30,7 +30,6 @@ const task = new Solution(
   },
   (arr: string[][]) => {
     const pos = [-1, 1].flatMap((x, _, arr) => arr.map((y) => [x, y]));
-    console.log(pos);
     const count = arr.reduce((p, c, x) =>
       p + c.filter((s, y) => {
         if (s === "A") {
