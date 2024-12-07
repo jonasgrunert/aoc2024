@@ -11,7 +11,7 @@ declare global {
 
 type Reporter<O> = (
   name: string,
-  result: O,
+  result: O | NotImplementedError | InputMissingError,
   expected?: O,
   time?: number,
 ) => void;
@@ -22,16 +22,19 @@ type ReadOpts<T> = {
   sep?: string | RegExp;
 };
 
+export class NotImplementedError extends Error {}
+export class InputMissingError extends Error {}
+
 const DefaultImplementation = () => {
-  throw new Error("Not implemented");
+  throw new NotImplementedError();
 };
 
 class Solution<T, O1, O2 = O1> {
   #t1: TaskFunction<T, O1>;
-  #t2?: TaskFunction<T, O2>;
+  #t2: TaskFunction<T, O2>;
   #opts: Required<ReadOpts<T>>;
   #filename = "Unkown";
-  #reporter: Reporter<O1 | O2 | string> = DefaultImplementation;
+  #reporter: Reporter<O1 | O2> = DefaultImplementation;
   #reader: InputReader = DefaultImplementation;
   #r1?: O1;
   #r2?: O2;
@@ -48,9 +51,7 @@ class Solution<T, O1, O2 = O1> {
     },
   ) {
     this.#t1 = task1;
-    if (typeof task2 === "function") {
-      this.#t2 = task2;
-    }
+    this.#t2 = typeof task2 === "function" ? task2 : DefaultImplementation;
     this.#opts = Object.assign(
       {
         transform: (data: string) => <T> data,
@@ -64,8 +65,8 @@ class Solution<T, O1, O2 = O1> {
     return this.#t1(input);
   }
 
-  result2(input: T[]): O2 | undefined {
-    return this.#t2?.(input);
+  result2(input: T[]): O2 {
+    return this.#t2(input);
   }
 
   prepare(input: string): T[] {
@@ -86,26 +87,42 @@ class Solution<T, O1, O2 = O1> {
         const dur = Date.now() - time;
         this.#reporter(`Day ${this.#filename} - Task 1`, result, this.#r1, dur);
       }
+    } catch (err: unknown) {
+      if (
+        err instanceof NotImplementedError || err instanceof InputMissingError
+      ) {
+        this.#reporter(
+          `Day ${this.#filename} - Task 1`,
+          err,
+        );
+      } else {
+        throw err;
+      }
+    }
+    try {
       const input2 = this.#reader(this.#filename, true);
       if (this.#r2 !== undefined) {
         const time = Date.now();
         const result = this.result2(this.prepare(input2));
         const dur = Date.now() - time;
-        if (result !== undefined) {
-          this.#reporter(
-            `Day ${this.#filename} - Task 2`,
-            result,
-            this.#r2,
-            dur,
-          );
-        }
+        this.#reporter(
+          `Day ${this.#filename} - Task 2`,
+          result,
+          this.#r2,
+          dur,
+        );
       }
     } catch (err: unknown) {
-      this.#reporter(
-        `Day ${this.#filename}`,
-        // @ts-expect-error Message is checked for null value
-        err?.message ?? "",
-      );
+      if (
+        err instanceof NotImplementedError || err instanceof InputMissingError
+      ) {
+        this.#reporter(
+          `Day ${this.#filename} - Task 2`,
+          err,
+        );
+      } else {
+        throw err;
+      }
     }
   }
 
@@ -113,7 +130,7 @@ class Solution<T, O1, O2 = O1> {
     this.#filename = name.match(/(?<num>\d{2}).ts/)?.groups?.num ?? name;
   }
 
-  set reporter(report: Reporter<O1 | O2 | string>) {
+  set reporter(report: Reporter<O1 | O2>) {
     this.#reporter = report;
   }
 
