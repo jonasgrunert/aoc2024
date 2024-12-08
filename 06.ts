@@ -22,11 +22,13 @@ function calculatePath(
 ) {
   let [x, y, dir] = start;
   const visited = new Set<string>();
+  const path: [number, number, number][] = [];
   while (x < arr.length && x >= 0 && y < arr[0].length && y >= 0) {
     const pos = [x, y, dir].join(",");
     if (visited.has(pos) && arr[x]?.[y] !== undefined) {
       return undefined;
     }
+    path.push([x, y, dir]);
     visited.add(pos);
     const nx = x + dirs[dir][0];
     const ny = y + dirs[dir][1];
@@ -37,32 +39,37 @@ function calculatePath(
       y = ny;
     }
   }
-  return new Set([...visited].map((l) => l.slice(0, l.lastIndexOf(","))));
+  return {
+    visited: new Set([...visited].map((l) => l.slice(0, l.lastIndexOf(",")))),
+    path,
+  };
 }
 
 const task = new Solution(
   (arr: string[][]) => {
-    return calculatePath(arr)!.size;
+    return calculatePath(arr)!.visited.size;
   },
   (arr: string[][]) => {
     let obst = 0;
-    const start = getStart(arr);
-    const path = calculatePath(arr)!;
-    for (const pos of path) {
-      const [x, y] = pos.split(",").map((n) => Number.parseInt(n));
+    const seen = new Set<string>();
+    const { path } = calculatePath(arr)!;
+    path.forEach(([x, y], i, a) => {
+      if (i === 0) return;
+      const pos = [x, y].join(",");
       const prev = arr[x][y];
-      if (prev === "#") continue;
+      if (seen.has(pos) || prev === "#") return;
       arr[x][y] = "#";
+      seen.add(pos);
       if (
         calculatePath(
           arr,
-          start,
+          a[i - 1],
         ) === undefined
       ) {
         obst++;
       }
       arr[x][y] = prev;
-    }
+    });
     return obst;
   },
   {
