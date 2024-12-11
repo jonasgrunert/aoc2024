@@ -45,6 +45,52 @@ function calculatePath(
   };
 }
 
+function skipMap(arr: string[][]) {
+  const map = new Map<string, string | undefined>();
+  const px: number[] = arr[0].map(() => -1);
+  const nx: number[] = arr[0].map((_, y) =>
+    arr.findIndex((l) => l[y] === "#") - 1
+  );
+  for (let x = 0; x < arr.length; x++) {
+    let py = -1;
+    let ny = arr[x].indexOf("#") - 1;
+    for (let y = 0; y < arr[0].length; y++) {
+      if (arr[x][y] === "#") {
+        px[y] = x + 1;
+        py = y + 1;
+        ny = arr[x].indexOf("#") - 1;
+        nx[y] = arr.slice(x).findIndex((l) => l[y] === "#") - 1;
+      }
+      map.set(
+        [x, y, 0].join(","),
+        nx[y] < 0 ? undefined : [nx[y], y, 1].join(","),
+      );
+      map.set([x, y, 1].join(","), py < 0 ? undefined : [x, py, 2].join(","));
+      map.set(
+        [x, y, 2].join(","),
+        px[y] < 0 ? undefined : [px[y], y, 3].join(","),
+      );
+      map.set(
+        [x, y, 3].join(","),
+        ny < 0 ? undefined : [x, ny, 0].join(","),
+      );
+    }
+  }
+  return map;
+}
+
+function useSkipMap(arr: string[][]) {
+  const start = getStart(arr);
+  const skip = skipMap(arr);
+  for (
+    let p: string | undefined = start.join(",");
+    p !== undefined;
+    p = skip.get(p)
+  ) {
+    console.log(p);
+  }
+}
+
 const task = new Solution(
   (arr: string[][]) => {
     return calculatePath(arr)!.visited.size;
