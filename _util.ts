@@ -3,6 +3,13 @@ import Solution, {
   NotImplementedError,
 } from "./solution.ts";
 
+Object.defineProperty(globalThis, "isTest", {
+  value: false,
+  writable: false,
+  configurable: false,
+  enumerable: false,
+});
+
 for (
   const file of [...Deno.readDirSync(".")].sort((a, b) =>
     a.name.localeCompare(b.name)
