@@ -45,16 +45,20 @@ function calculatePath(
   };
 }
 
-function skipMap(arr: string[][]) {
+function getSkipMap(arr: string[][]) {
   const map = new Map<string, string | undefined>();
   const px: number[] = arr[0].map(() => -1);
   const nx: number[] = arr[0].map((_, y) =>
     arr.findIndex((l) => l[y] === "#") - 1
   );
+  let start = "";
   for (let x = 0; x < arr.length; x++) {
     let py = -1;
     let ny = arr[x].indexOf("#") - 1;
     for (let y = 0; y < arr[0].length; y++) {
+      if (arr[x][y] !== "." && arr[x][y] !== "#") {
+        start = [x, y, dirs.findIndex((v) => v[2] === arr[x][y])].join(",");
+      }
       if (arr[x][y] === "#") {
         px[y] = x + 1;
         py = y + 1;
@@ -76,24 +80,53 @@ function skipMap(arr: string[][]) {
       );
     }
   }
-  return map;
+  return { skip: map, start };
 }
 
-function useSkipMap(arr: string[][]) {
-  const start = getStart(arr);
-  const skip = skipMap(arr);
+function getMap(arr: string[][]) {
+  const skip = new Map<string, string>();
+  let start = "";
+  for (let x = 0; x < arr.length; x++) {
+    for (let y = 0; y < arr[0].length; y++) {
+      if (arr[x][y] !== "." && arr[x][y] !== "#") {
+        start = [x, y, dirs.findIndex((v) => v[2] === arr[x][y])].join(",");
+      }
+      for (let d = 0; d < dirs.length; d++) {
+        const nx = x + dirs[d][0];
+        const ny = y + dirs[d][1];
+        const n = arr[nx]?.[ny];
+        const pos = [x, y, d].join(",");
+        if (n === "#") {
+          skip.set(pos, [x, y, (d + 1) % 4].join(","));
+        } else if (n !== undefined) {
+          skip.set(pos, [nx, ny, d].join(","));
+        }
+      }
+    }
+  }
+  return { skip, start };
+}
+
+function useMap(map: { skip: Map<string, string>; start: string }) {
+  const { skip, start } = map;
+  const path = new Set<string>();
   for (
-    let p: string | undefined = start.join(",");
+    let p: string | undefined = start;
     p !== undefined;
     p = skip.get(p)
   ) {
-    console.log(p);
+    if (path.has(p)) return undefined;
+    path.add(p);
   }
+  return path;
 }
 
 const task = new Solution(
   (arr: string[][]) => {
-    return calculatePath(arr)!.visited.size;
+    return useMap(getMap(arr))!.values().reduce(
+      (p, v) => p.add(v.slice(0, v.lastIndexOf(","))),
+      new Set<string>(),
+    ).size;
   },
   (arr: string[][]) => {
     let obst = 0;
