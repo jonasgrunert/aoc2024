@@ -97,18 +97,11 @@ const task = new Solution(
       }
     }
     const prog = arr[1].map((c) => moves.find((v) => c === v[0])!);
-    let c = 0;
     for (const [_, i] of prog) {
-      c++;
-      if (c > 0 && c <= 100) {
-        console.log(
-          toMap(arr[0].length, arr[0][0].length * 2, walls, boxes, start, true),
-        );
-      }
       let movedBoxes: number[] = [];
       let move: number[] = [start + i];
       while (
-        move.every(m => !walls.has(m)) &&
+        move.every((m) => !walls.has(m)) &&
         move.some((m) => boxes.has(m) || boxes.has(m - 1))
       ) {
         move = move.flatMap((m) => [m, m - 1]).filter((m) => boxes.has(m));
