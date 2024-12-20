@@ -88,9 +88,6 @@ class PrioQ {
   }
 }
 
-// east 0
-
-const mod = (n: number, d: number) => ((n % d) + d) % d;
 const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
 
 function djikstra(bounds: number, bytes: [number, number][]) {
