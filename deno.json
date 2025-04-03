@@ -5,6 +5,8 @@
     "build": "deno run -A bundle.ts"
   },
   "compilerOptions": {
-    "lib": ["deno.window"]
+    "lib": [
+      "deno.window"
+    ]
   }
 }

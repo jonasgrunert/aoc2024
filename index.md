@@ -1,0 +1,1 @@
+The third year in a row I tried to do this on a daily basis. Again I failed short before christmas due to the yearly end of year festivities. The first year I overhauled the entire building process for the web page and the tests.
